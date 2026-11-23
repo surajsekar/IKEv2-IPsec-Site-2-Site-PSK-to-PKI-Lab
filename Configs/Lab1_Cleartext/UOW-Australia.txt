@@ -1,0 +1,54 @@
+! =====================================================================
+! Lab 1 - UOW-Australia: base network, no encryption
+!
+! [EXEC]   = type at the router prompt (UOW-Australia#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Name the router ----
+hostname UOW-Australia
+!
+! ---- Step 2 [CONFIG] Link to the internet ----
+interface GigabitEthernet0/1
+ description Link to Internet-RTR
+ ip address 198.51.100.2 255.255.255.252
+ no shutdown
+!
+! ---- Step 3 [CONFIG] Campus LAN: one sub-interface per department ----
+! Gi0/3 is a trunk to SW-Australia. Each VLAN gets its own gateway (.254).
+interface GigabitEthernet0/3
+ description Campus LAN (trunk to switch)
+ no ip address
+ no shutdown
+!
+interface GigabitEthernet0/3.21
+ description Student Portal
+ encapsulation dot1Q 21
+ ip address 10.2.1.254 255.255.255.0
+!
+interface GigabitEthernet0/3.22
+ description Application Server
+ encapsulation dot1Q 22
+ ip address 10.2.2.254 255.255.255.0
+!
+interface GigabitEthernet0/3.23
+ description Database Server
+ encapsulation dot1Q 23
+ ip address 10.2.3.254 255.255.255.0
+!
+interface GigabitEthernet0/3.24
+ description Management
+ encapsulation dot1Q 24
+ ip address 10.2.4.254 255.255.255.0
+!
+! ---- Step 4 [CONFIG] Default route to the internet ----
+ip route 0.0.0.0 0.0.0.0 198.51.100.1
+!
+end
+!
+! ---- Step 5 [EXEC] Check ----
+ping 198.51.100.1
+!   Look for: the ping succeeds (!!!!!)
+!
+! ---- Save ----
+write memory

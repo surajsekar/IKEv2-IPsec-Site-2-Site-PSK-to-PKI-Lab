@@ -1,0 +1,16 @@
+=====================================================================
+Lab 1 - Dubai-PC (VPC): host in VLAN 11, Admissions and Registration
+Type these at the VPC console (VPCS>)
+=====================================================================
+
+---- Step 1 Set the address and gateway ----
+ip 10.1.1.1/24 10.1.1.254
+
+---- Step 2 Save ----
+save
+
+---- Step 3 Check ----
+show ip
+   Look for: IP 10.1.1.1/24, GATEWAY 10.1.1.254
+ping 10.1.1.254
+   Look for: replies from the UOW-Dubai gateway

@@ -1,0 +1,18 @@
+=====================================================================
+Lab 1 - Australia-PC (VPC): host in VLAN 21, Student Portal
+Type these at the VPC console (VPCS>)
+=====================================================================
+
+---- Step 1 Set the address and gateway ----
+ip 10.2.1.1/24 10.2.1.254
+
+---- Step 2 Save ----
+save
+
+---- Step 3 Check ----
+show ip
+   Look for: IP 10.2.1.1/24, GATEWAY 10.2.1.254
+ping 10.2.1.254
+   Look for: replies from the UOW-Australia gateway
+ping 10.1.1.1
+   Look for: replies from Dubai-PC (needs the temporary routes on Internet-RTR)

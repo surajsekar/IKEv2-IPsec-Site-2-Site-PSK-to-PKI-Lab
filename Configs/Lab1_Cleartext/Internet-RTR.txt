@@ -1,0 +1,38 @@
+! =====================================================================
+! Lab 1 - Internet-RTR: the internet between the two campuses
+!
+! [EXEC]   = type at the router prompt (Internet-RTR#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Name the router ----
+hostname Internet-RTR
+!
+! ---- Step 2 [CONFIG] Links to both campuses ----
+! The internet side of each link is .1, the campus side is .2.
+interface GigabitEthernet0/0
+ description Link to UOW-Dubai
+ ip address 203.0.113.1 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description Link to UOW-Australia
+ ip address 198.51.100.1 255.255.255.252
+ no shutdown
+!
+! ---- Step 3 [CONFIG] Temporary routes to the campus networks ----
+! Lab 1 only. These let the two campuses reach each other with no
+! encryption, so the traffic can be read in Wireshark.
+! They are removed in Lab 2.
+ip route 10.1.0.0 255.255.0.0 203.0.113.2
+ip route 10.2.0.0 255.255.0.0 198.51.100.2
+!
+end
+!
+! ---- Step 4 [EXEC] Check ----
+ping 203.0.113.2
+ping 198.51.100.2
+!   Look for: both pings succeed (!!!!!)
+!
+! ---- Save ----
+write memory

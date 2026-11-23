@@ -1,0 +1,68 @@
+! =====================================================================
+! Lab 2 - UOW-Dubai: IKEv2/IPsec tunnel with a pre-shared key
+! Starting point: Lab1_Cleartext/UOW-Dubai.txt
+! Do Lab2_PSK/Internet-RTR.txt first.
+!
+! [EXEC]   = type at the router prompt (UOW-Dubai#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Phase 1 proposal: algorithms for the IKE SA ----
+! AES-256-GCM encryption, HMAC-SHA-384 PRF, DH group 20 (ECDH P-384).
+! Both routers must offer the same values, or Phase 1 fails.
+crypto ikev2 proposal PROP-AES256GCM
+ encryption aes-gcm-256
+ prf sha384
+ group 20
+!
+crypto ikev2 policy POL-AES256GCM
+ proposal PROP-AES256GCM
+!
+! ---- Step 2 [CONFIG] Pre-shared key for the Australia peer ----
+! Replace <PRE-SHARED-KEY> with the same secret on both routers.
+crypto ikev2 keyring KR-AUSTRALIA
+ peer UOW-Australia
+  address 198.51.100.2
+  pre-shared-key <PRE-SHARED-KEY>
+!
+! ---- Step 3 [CONFIG] IKEv2 profile: who the peer is and how to authenticate ----
+crypto ikev2 profile PROF-AUSTRALIA
+ match identity remote address 198.51.100.2 255.255.255.255
+ identity local address 203.0.113.2
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local KR-AUSTRALIA
+!
+! ---- Step 4 [CONFIG] Phase 2: algorithms for the IPsec SA ----
+! ESP with AES-256-GCM in tunnel mode; PFS with DH group 20 at rekey.
+crypto ipsec transform-set TS-AES256GCM esp-gcm 256
+ mode tunnel
+!
+crypto ipsec profile IPSEC-AUSTRALIA
+ set transform-set TS-AES256GCM
+ set pfs group20
+ set ikev2-profile PROF-AUSTRALIA
+!
+! ---- Step 5 [CONFIG] Tunnel interface and route to Australia ----
+interface Tunnel0
+ ip address 172.16.0.1 255.255.255.252
+ tunnel source GigabitEthernet0/0
+ tunnel destination 198.51.100.2
+ tunnel mode ipsec ipv4
+ tunnel protection ipsec profile IPSEC-AUSTRALIA
+!
+ip route 10.2.0.0 255.255.0.0 Tunnel0
+!
+end
+!
+! ---- Step 6 [EXEC] Check the tunnel ----
+! Do this after Lab2_PSK/UOW-Australia.txt is also done.
+show crypto ikev2 sa
+!   Look for: Status READY
+show crypto ipsec sa
+!   Look for: the encrypt and decrypt counters going up during a ping
+!   from Dubai-PC (10.1.1.1) to Australia-PC (10.2.1.1).
+!   In Wireshark on the Internet-RTR link: only ESP packets, no readable ICMP.
+!
+! ---- Save ----
+write memory

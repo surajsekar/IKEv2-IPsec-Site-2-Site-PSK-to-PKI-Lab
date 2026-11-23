@@ -1,0 +1,37 @@
+=====================================================================
+Lab 3 - The offline certificate authority (on the Mac)
+Program: ikev2_gateway_ca.py (in the main folder of this repository)
+Run everything below in Terminal, in the folder that holds the program.
+=====================================================================
+
+---- Step 1 Check that Python and the cryptography library are installed ----
+python3 --version
+python3 -c "import cryptography; print(cryptography.__version__)"
+   Look for: a Python 3 version number, then a cryptography version number.
+   Install the library only if the second command fails:
+     python3 -m pip install cryptography
+
+---- Step 2 Create the root CA (once only) ----
+python3 ikev2_gateway_ca.py init
+   The program asks for a passphrase twice. It protects the CA private key.
+   It creates two files:
+     ca_key.pem   the CA private key (encrypted). Stays on the Mac.
+                  Never copy it to the routers or upload it anywhere.
+     ca_cert.pem  the root CA certificate. This is pasted into both routers
+                  (Step 5 of UOW-Dubai.txt and UOW-Australia.txt).
+
+---- Step 3 Sign a router's certificate request ----
+Each router produces a certificate request (Step 6 of its router file).
+Save it as a text file in this folder, then run:
+python3 ikev2_gateway_ca.py sign dubai.csr
+python3 ikev2_gateway_ca.py sign australia.csr
+   The program asks for the CA passphrase.
+   It checks the request's signature and that the key is ECDSA P-384,
+   then writes the signed certificate:
+     dubai.csr     -> dubai.crt
+     australia.csr -> australia.crt
+   These are pasted back into the routers (Step 8 of each router file).
+
+---- Optional check ----
+openssl verify -CAfile ca_cert.pem dubai.crt australia.crt
+   Look for: dubai.crt: OK and australia.crt: OK

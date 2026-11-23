@@ -1,0 +1,90 @@
+! =====================================================================
+! Lab 3 - UOW-Dubai: moving Phase 1 authentication from PSK to certificates
+! Starting point: Lab2_PSK/UOW-Dubai.txt
+! Do CA.txt Steps 1-2 first, so that ca_cert.pem exists.
+!
+! [EXEC]   = type at the router prompt (UOW-Dubai#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! [MAC]    = do on the Mac, at the offline CA
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Remove the pre-shared key authentication ----
+! The tunnel goes down here and stays down until Step 10.
+crypto ikev2 profile PROF-AUSTRALIA
+ no keyring local KR-AUSTRALIA
+ no authentication remote pre-share
+ no authentication local pre-share
+ no match identity remote address 198.51.100.2 255.255.255.255
+ no identity local address 203.0.113.2
+!
+no crypto ikev2 keyring KR-AUSTRALIA
+!
+end
+!
+! ---- Step 2 [EXEC] Set the router clock ----
+! Certificates are valid only between two dates, so the clock must be correct.
+clock set hh:mm:ss <day> <month> <year>
+!   Example: clock set 21:40:00 23 November 2026
+!
+! ---- Step 3 [EXEC] Create the router's own key pair (ECDSA P-384) ----
+! The private key is created on the router and never leaves it.
+crypto key generate ec keysize 384 label UOW-Dubai-KEY
+!
+! ---- Step 4 [CONFIG] Trustpoint and certificate map ----
+crypto pki trustpoint UOWD-ROOT-CA
+ enrollment terminal pem
+ subject-name CN=uow-dubai.uow.local
+ revocation-check none
+ eckeypair UOW-Dubai-KEY
+ hash sha384
+!
+crypto pki certificate map MAP-AUSTRALIA 10
+ subject-name co uow-australia
+!
+end
+!
+! ---- Step 5 [EXEC] Install the root CA certificate ----
+crypto pki authenticate UOWD-ROOT-CA
+!   The router asks for the CA certificate:
+!   paste the contents of ca_cert.pem, then press Enter on an empty line.
+!   The router shows the certificate fingerprint and asks to accept it:
+!   type yes.
+!
+! ---- Step 6 [EXEC] Create the certificate request (CSR) ----
+crypto pki enroll UOWD-ROOT-CA
+!   The router asks three questions:
+!     Include the router serial number in the subject name?  type no
+!     Include an IP address in the subject name?             type no
+!     Display Certificate Request to terminal?               type yes
+!   The router prints the request.
+!   Copy everything from -----BEGIN CERTIFICATE REQUEST-----
+!   to -----END CERTIFICATE REQUEST----- into a text file named dubai.csr.
+!   If the router asks "Redisplay enrollment request?": type no.
+!
+! ---- Step 7 [MAC] Sign the request with the offline CA ----
+!   Copy dubai.csr to the Mac and sign it as described in CA.txt (Step 3).
+!   The CA gives back dubai.crt.
+!
+! ---- Step 8 [EXEC] Import the signed certificate ----
+crypto pki import UOWD-ROOT-CA certificate
+!   The router asks for the certificate:
+!   paste the contents of dubai.crt, then press Enter on an empty line.
+!   The router confirms that the certificate was imported.
+!
+! ---- Step 9 [CONFIG] Set the IKEv2 profile to ECDSA certificates ----
+! Do this only after BOTH routers have finished Step 8.
+crypto ikev2 profile PROF-AUSTRALIA
+ match certificate MAP-AUSTRALIA
+ identity local dn
+ authentication remote ecdsa-sig
+ authentication local ecdsa-sig
+ pki trustpoint UOWD-ROOT-CA
+!
+end
+!
+! ---- Step 10 [EXEC] Bring the tunnel up again and check ----
+clear crypto session
+show crypto ikev2 sa detailed
+!   Look for: Status READY, Auth sign: ECDSA, Auth verify: ECDSA
+show crypto ipsec sa
+!   Look for: the encrypt and decrypt counters going up during a ping

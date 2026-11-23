@@ -1,0 +1,57 @@
+! =====================================================================
+! Lab 1 - UOW-Dubai: base network, no encryption
+!
+! [EXEC]   = type at the router prompt (UOW-Dubai#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Name the router ----
+hostname UOW-Dubai
+!
+! ---- Step 2 [CONFIG] Link to the internet ----
+interface GigabitEthernet0/0
+ description Link to Internet-RTR
+ ip address 203.0.113.2 255.255.255.252
+ no shutdown
+!
+! ---- Step 3 [CONFIG] Campus LAN: one sub-interface per department ----
+! Gi0/3 is a trunk to SW-Dubai. Each VLAN gets its own gateway (.254).
+interface GigabitEthernet0/3
+ description Campus LAN (trunk to switch)
+ no ip address
+ no shutdown
+!
+interface GigabitEthernet0/3.11
+ description Admissions and Registration
+ encapsulation dot1Q 11
+ ip address 10.1.1.254 255.255.255.0
+!
+interface GigabitEthernet0/3.12
+ description Human Resources
+ encapsulation dot1Q 12
+ ip address 10.1.2.254 255.255.255.0
+!
+interface GigabitEthernet0/3.13
+ description Lecturers
+ encapsulation dot1Q 13
+ ip address 10.1.3.254 255.255.255.0
+!
+interface GigabitEthernet0/3.14
+ description IT Staff
+ encapsulation dot1Q 14
+ ip address 10.1.4.254 255.255.255.0
+!
+! ---- Step 4 [CONFIG] Default route to the internet ----
+ip route 0.0.0.0 0.0.0.0 203.0.113.1
+!
+end
+!
+! ---- Step 5 [EXEC] Check ----
+ping 203.0.113.1
+!   Look for: the ping succeeds (!!!!!)
+!   Then, from Dubai-PC: ping 10.2.1.1 (Australia-PC).
+!   Capture on the Internet-RTR link in Wireshark: the ICMP packets
+!   and their contents are readable.
+!
+! ---- Save ----
+write memory

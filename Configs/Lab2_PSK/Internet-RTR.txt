@@ -1,0 +1,22 @@
+! =====================================================================
+! Lab 2 - Internet-RTR: remove the temporary routes
+! Starting point: Lab1_Cleartext/Internet-RTR.txt
+!
+! [EXEC]   = type at the router prompt (Internet-RTR#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Remove the routes to the campus networks ----
+! From now on the internet only knows the two public addresses.
+! The campuses can reach each other only through the IPsec tunnel.
+no ip route 10.1.0.0 255.255.0.0 203.0.113.2
+no ip route 10.2.0.0 255.255.0.0 198.51.100.2
+!
+end
+!
+! ---- Step 2 [EXEC] Check ----
+show ip route static
+!   Look for: no routes to 10.1.0.0 or 10.2.0.0
+!
+! ---- Save ----
+write memory

@@ -1,0 +1,43 @@
+! =====================================================================
+! Lab 1 - SW-Dubai: campus switch (set up once, not changed later)
+!
+! [EXEC]   = type at the switch prompt (SW-Dubai#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Name the switch ----
+hostname SW-Dubai
+!
+! ---- Step 2 [CONFIG] One VLAN per department ----
+vlan 11
+ name Admissions-Registration
+vlan 12
+ name Human-Resources
+vlan 13
+ name Lecturers
+vlan 14
+ name IT-Staff
+!
+! ---- Step 3 [CONFIG] Trunk to UOW-Dubai (carries all four VLANs) ----
+interface GigabitEthernet0/3
+ description Trunk to UOW-Dubai
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 11,12,13,14
+!
+! ---- Step 4 [CONFIG] Access port for Dubai-PC (VLAN 11) ----
+interface GigabitEthernet0/0
+ description Dubai-PC - Admissions and Registration
+ switchport mode access
+ switchport access vlan 11
+!
+end
+!
+! ---- Step 5 [EXEC] Check ----
+show vlan brief
+!   Look for: VLANs 11-14, with Gi0/0 in VLAN 11
+show interfaces trunk
+!   Look for: Gi0/3 trunking, VLANs 11-14 allowed
+!
+! ---- Save ----
+write memory

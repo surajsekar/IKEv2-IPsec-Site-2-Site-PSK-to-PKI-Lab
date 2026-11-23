@@ -1,0 +1,43 @@
+! =====================================================================
+! Lab 1 - SW-Australia: campus switch (set up once, not changed later)
+!
+! [EXEC]   = type at the switch prompt (SW-Australia#)
+! [CONFIG] = type "configure terminal" first, then paste the block
+! =====================================================================
+!
+! ---- Step 1 [CONFIG] Name the switch ----
+hostname SW-Australia
+!
+! ---- Step 2 [CONFIG] One VLAN per department ----
+vlan 21
+ name Student-Portal
+vlan 22
+ name Application-Server
+vlan 23
+ name Database-Server
+vlan 24
+ name Management
+!
+! ---- Step 3 [CONFIG] Trunk to UOW-Australia (carries all four VLANs) ----
+interface GigabitEthernet0/3
+ description Trunk to UOW-Australia
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 21,22,23,24
+!
+! ---- Step 4 [CONFIG] Access port for Australia-PC (VLAN 21) ----
+interface GigabitEthernet0/0
+ description Australia-PC - Student Portal
+ switchport mode access
+ switchport access vlan 21
+!
+end
+!
+! ---- Step 5 [EXEC] Check ----
+show vlan brief
+!   Look for: VLANs 21-24, with Gi0/0 in VLAN 21
+show interfaces trunk
+!   Look for: Gi0/3 trunking, VLANs 21-24 allowed
+!
+! ---- Save ----
+write memory
